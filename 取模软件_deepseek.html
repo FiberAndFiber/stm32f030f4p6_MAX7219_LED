@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8×8 点阵取模软件</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background: #f5f7fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+        .container {
+            background: white;
+            padding: 2rem 2.5rem 2.5rem;
+            border-radius: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 10, 30, 0.15);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            transition: box-shadow 0.2s;
+        }
+        h1 {
+            font-weight: 500;
+            font-size: 1.9rem;
+            letter-spacing: 1px;
+            color: #1e293b;
+            margin-top: 0;
+            margin-bottom: 0.3rem;
+        }
+        .sub {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin-bottom: 1.8rem;
+            border-bottom: 1px solid #e9edf4;
+            padding-bottom: 0.8rem;
+        }
+        .grid-wrapper {
+            display: inline-block;
+            background: #eef2f8;
+            padding: 14px;
+            border-radius: 24px;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            width: 360px;
+            height: 360px;
+            background: #d0d8e4;
+            padding: 4px;
+            border-radius: 16px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+        .cell {
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.08s ease, transform 0.05s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .cell.on {
+            background: #1e3c72;
+            box-shadow: 0 0 0 1px #3b6cb0;
+        }
+        .cell:active {
+            transform: scale(0.94);
+        }
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px 18px;
+            margin: 28px 0 22px;
+        }
+        .btn {
+            background: white;
+            border: none;
+            padding: 0.7rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #1e293b;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.02), 0 2px 4px rgba(0, 0, 0, 0.02);
+            border: 1px solid #dbe0ea;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: #fafcff;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary {
+            background: #1e3c72;
+            border: 1px solid #1e3c72;
+            color: white;
+            box-shadow: 0 8px 16px -6px rgba(30, 60, 114, 0.25);
+        }
+        .btn-primary:hover {
+            background: #14315a;
+            border-color: #14315a;
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px -8px rgba(30, 60, 114, 0.35);
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            border-color: #cdd6e4;
+        }
+        .btn-secondary:hover {
+            background: #e6ecf5;
+            border-color: #b0bccf;
+        }
+        .btn:active {
+            transform: scale(0.94);
+        }
+        .output-area {
+            background: #f0f4fe;
+            padding: 1.2rem 1rem 1rem;
+            border-radius: 20px;
+            border: 1px solid #dae2f0;
+        }
+        .output-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #3b5a8c;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .hex-output {
+            background: #0b1b2f;
+            color: #b3d9ff;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 1.2rem;
+            padding: 0.7rem 1rem;
+            border-radius: 40px;
+            display: inline-block;
+            word-break: break-all;
+            min-width: 200px;
+            letter-spacing: 0.5px;
+            border: 1px solid #2a405c;
+        }
+        .binary-output {
+            background: #e9eef7;
+            padding: 0.8rem 1rem;
+            border-radius: 16px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: #1d2c4a;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 14px;
+            border: 1px solid #ccd8e9;
+            line-height: 1.5;
+            text-align: left;
+            display: inline-block;
+            width: 100%;
+        }
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #475569;
+            padding: 0 4px;
+            margin-top: 8px;
+        }
+        .badge {
+            background: #d9e2f0;
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1e3a6b;
+        }
+        .footer {
+            margin-top: 1.5rem;
+            color: #7f8aa0;
+            font-size: 0.75rem;
+            letter-spacing: 0.2px;
+        }
+        @media (max-width: 480px) {
+            .container { padding: 1.5rem; }
+            .grid { width: 280px; height: 280px; gap: 3px; padding: 3px; }
+            .grid-wrapper { padding: 10px; }
+            .hex-output { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>◈ 点阵取模</h1>
+        <div class="sub">8×8 · 单击切换 0 / 1</div>
+
+        <div class="grid-wrapper">
+            <div class="grid" id="gridContainer"></div>
+        </div>
+
+        <div class="action-bar">
+            <button class="btn btn-primary" id="generateBtn">✦ 确定 · 取模</button>
+            <button class="btn btn-secondary" id="clearBtn">⟲ 清空</button>
+            <button class="btn btn-secondary" id="invertBtn">◐ 反相</button>
+        </div>
+
+        <div class="output-area">
+            <div class="output-label">📋 十六进制 (行扫描, MSB→LSB)</div>
+            <div class="hex-output" id="hexDisplay">0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00</div>
+            
+            <div class="binary-output" id="binaryDisplay">00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000</div>
+
+            <div class="status-row">
+                <span>💡 点亮: <strong id="countDisplay">0</strong> / 64</span>
+                <span class="badge">点击方格切换</span>
+            </div>
+        </div>
+        <div class="footer">点击「确定」将当前点阵转换为 16 进制 · 每行 8 位</div>
+    </div>
+
+    <script>
+        (function() {
+            const ROWS = 8;
+            const COLS = 8;
+            let gridState = Array(ROWS).fill().map(() => Array(COLS).fill(0)); // 0 或 1
+
+            const gridEl = document.getElementById('gridContainer');
+            const hexDisplay = document.getElementById('hexDisplay');
+            const binaryDisplay = document.getElementById('binaryDisplay');
+            const countDisplay = document.getElementById('countDisplay');
+
+            // 渲染网格
+            function renderGrid() {
+                gridEl.innerHTML = '';
+                let onCount = 0;
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell' + (gridState[r][c] === 1 ? ' on' : '');
+                        if (gridState[r][c] === 1) onCount++;
+                        cell.dataset.row = r;
+                        cell.dataset.col = c;
+                        cell.addEventListener('click', cellClickHandler);
+                        gridEl.appendChild(cell);
+                    }
+                }
+                countDisplay.textContent = onCount;
+            }
+
+            // 点击事件：切换 0/1
+            function cellClickHandler(e) {
+                const row = parseInt(e.currentTarget.dataset.row);
+                const col = parseInt(e.currentTarget.dataset.col);
+                gridState[row][col] = gridState[row][col] === 1 ? 0 : 1;
+                renderGrid();          // 刷新样式 & 计数
+                // 不自动更新输出，等待用户按“确定”
+            }
+
+            // ---------- 取模逻辑 ----------
+            function generateHex() {
+                const hexValues = [];
+                const binaryLines = [];
+                let totalOn = 0;
+
+                for (let r = 0; r < ROWS; r++) {
+                    let byte = 0;
+                    // 从第0列到第7列 (MSB 为第0列, LSB 为第7列)
+                    for (let c = 0; c < COLS; c++) {
+                        const bit = gridState[r][c] === 1 ? 1 : 0;
+                        // 左移并填入 (MSB 左移)
+                        byte = (byte << 1) | bit;
+                        if (bit === 1) totalOn++;
+                    }
+                    hexValues.push(byte);
+                    // 二进制字符串 (补齐8位)
+                    const binStr = byte.toString(2).padStart(8, '0');
+                    binaryLines.push(binStr);
+                }
+
+                // 更新十六进制显示
+                const hexStr = hexValues.map(v => '0x' + v.toString(16).toUpperCase().padStart(2, '0')).join(', ');
+                hexDisplay.textContent = hexStr;
+
+                // 更新二进制显示 (每行一个字节)
+                binaryDisplay.textContent = binaryLines.join('\n');
+
+                // 更新计数
+                countDisplay.textContent = totalOn;
+            }
+
+            // ---------- 清空 ----------
+            function clearGrid() {
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        gridState[r][c] = 0;
+                    }
+                }
+                renderGrid();
+                // 清空输出区显示默认值 (可选)
+                hexDisplay.textContent = '0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00';
+                binaryDisplay.textContent = '00000000\n00000000\n00000000\n00000000\n00000000\n00000000\n00000000\n00000000';
+                countDisplay.textContent = '0';
+            }
+
+            // ---------- 反相 ----------
+            function invertGrid() {
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        gridState[r][c] = gridState[r][c] === 1 ? 0 : 1;
+                    }
+                }
+                renderGrid();
+                // 注意：反相后不自动更新输出，用户可再按“确定”
+                // 但为了体验，可以保持输出区不变 (用户期望按确定才刷新)
+                // 但这里我们只刷新格子状态，不刷新输出。
+                // 不过，有些用户可能觉得反相后输出保持不变会觉得奇怪，
+                // 我们遵循交互: “单击确定后，把每行的0和1，并转换为16进制”
+                // 所以反相只改变格子，输出留到点击确定。
+            }
+
+            // ---------- 初始化 预设一个笑脸图案 (便于演示) ----------
+            function loadDemoPattern() {
+                // 经典笑脸 (和描述一致)
+                const demo = [
+                    [0,0,1,1,1,1,0,0],
+                    [0,1,0,0,0,0,1,0],
+                    [1,0,1,0,0,1,0,1],
+                    [1,0,0,0,0,0,0,1],
+                    [1,0,0,1,1,0,0,1],
+                    [1,0,1,0,0,1,0,1],
+                    [0,1,0,0,0,0,1,0],
+                    [0,0,1,1,1,1,0,0]
+                ];
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        gridState[r][c] = demo[r][c];
+                    }
+                }
+                renderGrid();
+                // 自动生成一次输出 (让用户看到示例)
+                generateHex();
+            }
+
+            // ---------- 绑定按钮 ----------
+            document.getElementById('generateBtn').addEventListener('click', generateHex);
+            document.getElementById('clearBtn').addEventListener('click', clearGrid);
+            document.getElementById('invertBtn').addEventListener('click', function() {
+                invertGrid();
+                // 可选项：反相后自动更新输出？为了符合“单击确定后”的要求，不自动更新。
+                // 但很多人会期望反相后输出跟着变，我们遵循需求：“单击确定后，把每行的0和1，并转换为16进制”
+                // 所以保持输出不变，直到用户点击“确定”。
+                // 但是为了不混淆，我们在反相后不清除输出，保留之前的值，但用户看到格子变化了，点确定即可。
+                // 也可以加个小提示（不额外增加UI），保持不变。
+            });
+
+            // 额外：双击空白区域 或者 点击“确定”时自动更新计数，已经包含在generateHex中
+
+            // 启动：载入笑脸 + 生成初次输出
+            loadDemoPattern();
+
+            // 附加: 如果用户想通过点击“确定”刷新, 已经绑定了。
+            // 如果用户清空后, 输出为全0, 已处理
+            // 反相后不自动刷新输出, 但用户按确定即可刷新
+
+            // 为保持一致性，如果用户反相后按确定，会正确输出反相后的内容。
+        })();
+    </script>
+</body>
+</html>

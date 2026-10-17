@@ -1,0 +1,201 @@
+#include "stm32f0xx.h"                  // Device header
+
+#include "Key.h"
+#include "MPU6050.h"
+#include "MAX7219.h"
+#include "FluidSim.h"
+#include "Delay.h"
+
+/* 主循环节拍（毫秒）。只影响刷新率/响应速度，不影响长按 3s 的准确度。 */
+#define MAIN_TICK_MS   10
+
+/* 显示模式 */
+typedef enum {
+    MODE_DISPLAY = 0,   /* 默认显示画面（含多子页面） */
+    MODE_ALL_ON,        /* 全亮 */
+    MODE_FLUID          /* 流体模拟 */
+} AppMode;
+
+static AppMode app_mode;
+
+/* ==================== 子页面数据 ==================== */
+
+/* 页面 1：跳跃动画 */
+static const MAX7219_Picture JUMP[] = {
+    {0x00, 0x00, 0x00, 0x00, 0x20, 0x20, 0xFF, 0xFF},
+    {0x00, 0x00, 0x00, 0x00, 0x21, 0x21, 0xFF, 0xFF},
+    {0x00, 0x00, 0x00, 0x00, 0x22, 0x22, 0xFF, 0xFF},
+    {0x00, 0x00, 0x00, 0x00, 0x24, 0x24, 0xFF, 0xFF},
+    {0x00, 0x00, 0x00, 0x20, 0x28, 0x08, 0xFF, 0xFF},
+    {0x00, 0x00, 0x20, 0x20, 0x10, 0x10, 0xFF, 0xFF},
+    {0x00, 0x00, 0x20, 0x20, 0x20, 0x20, 0xFF, 0xFF},
+    {0x00, 0x00, 0x00, 0x20, 0x60, 0x40, 0xFF, 0xFF},
+    {0x00, 0x00, 0x00, 0x00, 0xA0, 0xA0, 0xFF, 0xFF},
+    {0x00, 0x00, 0x00, 0x00, 0x20, 0x20, 0xFF, 0xFF}
+};
+
+/* 页面 2*/
+static const MAX7219_Picture HELLO[] = {
+    {0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00},
+    {0x00, 0x02, 0x02, 0x03, 0x02, 0x02, 0x00, 0x00},
+    {0x00, 0x04, 0x04, 0x07, 0x04, 0x04, 0x00, 0x00},
+    {0x00, 0x09, 0x09, 0x0F, 0x09, 0x09, 0x00, 0x00},
+    {0x00, 0x12, 0x12, 0x1E, 0x12, 0x12, 0x00, 0x00},
+    {0x00, 0x25, 0x25, 0x3D, 0x25, 0x25, 0x00, 0x00},
+    {0x00, 0x4B, 0x4A, 0x7B, 0x4A, 0x4B, 0x00, 0x00},
+    {0x00, 0x97, 0x94, 0xF6, 0x94, 0x97, 0x00, 0x00},
+    {0x00, 0x2E, 0x28, 0xEC, 0x28, 0x2E, 0x00, 0x00},
+    {0x00, 0x5D, 0x51, 0xD9, 0x51, 0x5D, 0x00, 0x00},
+    {0x00, 0xBA, 0xA2, 0xB2, 0xA2, 0xBB, 0x00, 0x00},
+    {0x00, 0x74, 0x44, 0x64, 0x44, 0x77, 0x00, 0x00},
+    {0x00, 0xE8, 0x88, 0xC8, 0x88, 0xEE, 0x00, 0x00},
+    {0x00, 0xD1, 0x11, 0x91, 0x11, 0xDD, 0x00, 0x00},
+    {0x00, 0xA2, 0x22, 0x22, 0x22, 0xBB, 0x00, 0x00},
+    {0x00, 0x44, 0x44, 0x44, 0x44, 0x77, 0x00, 0x00},
+    {0x00, 0x88, 0x88, 0x88, 0x88, 0xEE, 0x00, 0x00},
+    {0x00, 0x10, 0x11, 0x11, 0x11, 0xDC, 0x00, 0x00},
+    {0x00, 0x21, 0x22, 0x22, 0x22, 0xB9, 0x00, 0x00},
+    {0x00, 0x43, 0x44, 0x44, 0x44, 0x73, 0x00, 0x00},
+    {0x00, 0x86, 0x89, 0x89, 0x89, 0xE6, 0x00, 0x00},
+    {0x00, 0x0C, 0x12, 0x12, 0x12, 0xCC, 0x00, 0x00},
+    {0x00, 0x18, 0x24, 0x24, 0x24, 0x98, 0x00, 0x00},
+    {0x00, 0x30, 0x48, 0x48, 0x48, 0x30, 0x00, 0x00},
+    {0x00, 0x60, 0x90, 0x90, 0x90, 0x60, 0x00, 0x00},
+    {0x00, 0xC0, 0x20, 0x20, 0x20, 0xC0, 0x00, 0x00},
+    {0x00, 0x80, 0x40, 0x40, 0x40, 0x80, 0x00, 0x00},
+    {0x00, 0x00, 0x80, 0x80, 0x80, 0x00, 0x00, 0x00},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+};
+
+/* 页面 3：笑脸（单张静态图） */
+static const MAX7219_Picture SMILE[] = {
+    {0x3C, 0x42, 0xA5, 0x81, 0xA5, 0x99, 0x42, 0x3C}
+};
+
+/* ==================== 页面表 ====================
+   一个页面 = { 帧数组, 帧数, 每帧间隔ms }。
+   间隔 = 0 表示静态单张图（不切帧）。
+   加新页面：在下面 pages[] 里加一行即可，页数自动算。 */
+typedef struct {
+    const MAX7219_Picture *frames;   /* 帧数组 */
+    uint8_t                count;    /* 帧数 */
+    uint16_t               interval; /* 每帧间隔 ms（0=静态） */
+} PageDef;
+
+static const PageDef pages[] = {
+    { JUMP,  (uint8_t)(sizeof(JUMP)  / sizeof(JUMP[0])),  350 },   /* 页1：跳跃 */
+    { HELLO, (uint8_t)(sizeof(HELLO) / sizeof(HELLO[0])), 300 },   /* 页2：Hello */
+    { SMILE, (uint8_t)(sizeof(SMILE) / sizeof(SMILE[0])), 0   },   /* 页3：笑脸(静态) */
+};
+#define PAGE_COUNT  (sizeof(pages) / sizeof(pages[0]))   /* 自动=3 */
+
+/* ==================== 子页面切换状态 ==================== */
+static uint8_t  page_index = 0;    /* 当前子页面：0=跳跃 1=Hello 2=笑脸 */
+static uint8_t  anim_frame = 0;    /* 当前页的帧序号 */
+static uint16_t anim_last  = 0;    /* 上一帧切换时刻(ms) */
+
+/* 显示当前页第 0 帧，并重置动画计时 */
+static void Display_PageShow(void)
+{
+    anim_frame = 0;
+    anim_last  = Key_Millis();
+    MAX7219_SHOWPICTURE(&pages[page_index].frames[0], 1, 0, 1);
+}
+
+/* 非阻塞推进当前页动画：到点切下一帧 */
+static void Display_PageTick(void)
+{
+    const PageDef *p = &pages[page_index];
+    if (p->interval == 0) return;                 /* 静态页，不动 */
+    if ((uint16_t)(Key_Millis() - anim_last) >= p->interval)
+    {
+        anim_last = Key_Millis();
+        anim_frame++;
+        if (anim_frame >= p->count) anim_frame = 0;
+        MAX7219_SHOWPICTURE(&p->frames[anim_frame], 1, 0, 1);
+    }
+}
+
+/* 进入默认显示：回到第 1 个子页面（跳跃） */
+static void Display_Default(void)
+{
+    page_index = 0;
+    Display_PageShow();
+}
+
+/* ---- 全亮 ---- */
+static void Display_AllOn(void)
+{
+    const uint8_t buf[8] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+    MAX7219_DrawBuffer(buf);
+}
+
+int main(void)
+{
+    Key_Init();
+    MPU6050_Init();
+    MAX7219_Init();
+
+    MAX7219_SetBrightness(1);                       /* 亮度 0~15，按需调整 */
+    MAX7219_SetOrientation(ORIENT_ROTATE_90);       /* 与你的安装方向一致，按需调整 */
+
+    app_mode = MODE_DISPLAY;
+    Display_Default();
+
+    while (1)
+    {
+        KeyEvent evt = Key_Scan();
+
+        switch (app_mode)
+        {
+        case MODE_DISPLAY:
+            Display_PageTick();                     /* 推进当前页动画 */
+            if (evt == KEY1_SHORT)                  /* KEY1 短按 → 全亮 */
+            {
+                app_mode = MODE_ALL_ON;
+                Display_AllOn();
+            }
+            else if (evt == KEY1_LONG)              /* KEY1 长按 → 流体 */
+            {
+                app_mode = MODE_FLUID;
+                Fluid_Init();
+            }
+            else if (evt == KEY2_SHORT)             /* KEY2 短按 → 切换子页面 */
+            {
+                page_index++;
+                if (page_index >= PAGE_COUNT) page_index = 0;
+                Display_PageShow();
+            }
+            break;
+
+        case MODE_ALL_ON:
+            if (evt == KEY2_SHORT)          /* KEY2 短按 → 回到显示 */
+            {
+                app_mode = MODE_DISPLAY;
+                Display_Default();
+            }
+            else if (evt == KEY1_LONG)      /* KEY1 长按 → 进入流体模拟 */
+            {
+                app_mode = MODE_FLUID;
+                Fluid_Init();
+            }
+            break;
+
+        case MODE_FLUID:
+            Fluid_Step();                   /* 推进一步并刷新 */
+            if (evt == KEY1_LONG)           /* 再次长按 → 回到显示 */
+            {
+                app_mode = MODE_DISPLAY;
+                Display_Default();
+            }
+            else if (evt == KEY2_SHORT)     /* KEY2 短按 → 回到显示 */
+            {
+                app_mode = MODE_DISPLAY;
+                Display_Default();
+            }
+            break;
+        }
+
+        Delay_ms(MAIN_TICK_MS);
+    }
+}

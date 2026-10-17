@@ -1,0 +1,70 @@
+{
+  "name": "stm32f030f4p6_MAX7219_LED阵列",
+  "owner_uuid": "b6849de6a1d34fb8a151b5e4aab6c859",
+  "creator_uuid": "b6849de6a1d34fb8a151b5e4aab6c859",
+  "created_at": "2026-10-14 22:22:58",
+  "updated_at": "2026-10-14 22:22:58",
+  "modifier_uuid": "b6849de6a1d34fb8a151b5e4aab6c859",
+  "content": "# STM32f030f4p6_MAX7219_LED阵列\n使用stm32f030f4p6为主控，使用MAX7219作为LED阵列驱动。硬件上包含双电源切换电路、电平转换电路、DCDC boost电路等\n主要功能：用 8×8 LED 点阵用于显示画面，内置 MPU6050 加速度计，能够感知板子的摆放姿态，并让点阵粒子像液体一样随重力流动。\n\n---\n## 一、效果预览\n![image.png](https://image.lceda.cn/oshwhub/pullImage/06a5ba7f350c4292a68d724286d6f0c1.png)\n\n![image.png](https://image.lceda.cn/oshwhub/pullImage/6753839b1f494ed0aa3774ab45423dd0.png)\n\n---\n\n## 二、功能特性\n\n| 功能 | 说明 |\n| --- | --- |\n| 表情动画 | 8×8 点阵显示跳跃、Hello、笑脸等多帧动画 |\n| 重力流体模拟 | 粒子朝重力方向“流动、堆积”，倾斜板子即可观察 |\n| 姿态感知 | MPU6050 读取加速度 / 角速度，计算重力方向 |\n| 按键交互 | KEY1 / KEY2 短按、长按切换显示模式与子页面 |\n| 非阻塞状态机 | 1ms 时基（TIM14 自由运行），动画与按键解耦 |\n\n### 按键逻辑（`测试程序` 包含功能）\n\n| 触发 | 结果 |\n| --- | --- |\n| 短按 KEY1（PA1） | 点阵全亮 |\n| 短按 KEY2（PA2） | 回到默认显示 / 切换子页面 |\n| 长按 KEY1 3 秒 | 进入流体模拟 |\n| 再次长按 KEY1 3 秒 | 回到默认显示画面 |\n\n---\n\n## 二、硬件组成\n\n| 模块 | 型号 / 接口 | 说明 |\n| --- | --- | --- |\n| 主控 | STM32F030F4P6 | 桌宠主控，标准库开发 |\n| 显示 | MAX7219 + 8×8 点阵 |  SPI 驱动 |\n| 姿态 | MPU6050（I2C） | 加速度计 + 陀螺仪 |\n| 存储 | AT24C02（EEPROM，I2C） | 掉电存储 |\n| 按键 | KEY1 / KEY2 微动开关 | 上拉输入，低电平有效 |\n| 指示灯 | LED（PA0） | 状态指示 |\n\n### 引脚定义（STM32F030F4P6）\n\n| 功能 | 引脚 |\n| --- | --- |\n| LED | PA0 |\n| KEY1 | PA1（上拉输入） |\n| KEY2 | PA2（上拉输入） |\n| I2C SCL | PA3（开漏，外部上拉） |\n| I2C SDA | PA4（开漏，外部上拉） |\n| SPI SCK | PA5 |\n| SPI CS | PA6 |\n| SPI MOSI | PA7 |\n\n### 本项目仅供个人学习、研究和非商业用途。严禁任何个人或实体将本项目及其衍生品用于商业销售、盈利活动。违者将追究法律责任。\n\n",
+  "archive": false,
+  "cbb_project": 0,
+  "thumb": "",
+  "ticket": 1,
+  "g_ticket": 1,
+  "boards": [],
+  "block_symbol_attrs_groups": {},
+  "default_sheet": "",
+  "branch_uuid": "",
+  "pcb_count": 0,
+  "format": "folder",
+  "config": "{\"type\":\"DOCHEAD\",\"ticket\":3}||{\"docType\":\"BOARD\",\"client\":\"2a83d6c52c88d13e\",\"uuid\":\"e9cb4edc4018f5b8\",\"updateTime\":1782280474544,\"version\":\"1782280474544\",\"editVersion\":\"3.2.175\",\"user\":{\"uuid\":\"e9cb4edc4018f5b8\"}}|\n{\"type\":\"META\",\"ticket\":3,\"id\":\"META\"}||{\"title\":\"Board1\",\"zIndex\":1}|\n{\"type\":\"DOCHEAD\",\"ticket\":104}||{\"docType\":\"CONFIG\",\"client\":\"2a83d6c52c88d13e\",\"uuid\":\"CONFIG\",\"updateTime\":1782280474967,\"version\":\"1782280474967\",\"editVersion\":\"3.2.175\",\"user\":{\"uuid\":\"2b4e38df286e4ae0984f83f53e67039d\",\"nickname\":\"eda_lhsghbog\",\"username\":\"eda_lhsghbog\",\"avatar\":\"/image/avatar-default.png\"}}|\n{\"type\":\"UNIVERSAL\",\"ticket\":1,\"id\":\"UNIVERSAL\"}||{\"allowLibRename\":true,\"defaultNetName\":true,\"wireMultipleNet\":true,\"netFlagCrossLayerConnection\":true,\"netLabelCrossPageConnection\":true,\"busGenerateNetClass\":true,\"relevanceDisplayRow\":\"SINGLE\",\"relevanceBelongSchPage\":\"NAME\",\"relevanceLocation\":\"ZONE\",\"multipartCrossLayer\":true}|\n{\"type\":\"META\",\"ticket\":60,\"id\":\"META\",\"firstTicket\":2}||{\"defaultSheet\":\"608f3e373a460acf\"}",
+  "profile": {
+    "boards": {
+      "e9cb4edc4018f5b8": {
+        "uuid": "e9cb4edc4018f5b8",
+        "title": "Board1",
+        "zIndex": 1
+      }
+    },
+    "schematics": {
+      "5ca4337cabade64f": {
+        "uuid": "5ca4337cabade64f",
+        "name": "Schematic1",
+        "board": "e9cb4edc4018f5b8",
+        "source": "",
+        "version": "1782354113405",
+        "updateTime": 1782354113405
+      }
+    },
+    "sheets": {
+      "0003cf292ecb766e": {
+        "uuid": "0003cf292ecb766e",
+        "title": "P1",
+        "schematic_uuid": "5ca4337cabade64f",
+        "zIndex": 1,
+        "source": "",
+        "version": "1788154276049",
+        "updateTime": 1788154276049
+      }
+    },
+    "pcbs": {
+      "5618d027c8407a6a": {
+        "uuid": "5618d027c8407a6a",
+        "title": "PCB1",
+        "board": "e9cb4edc4018f5b8",
+        "zIndex": null,
+        "parent_uuid": "",
+        "source": "",
+        "version": "1790157932686",
+        "updateTime": 1790157932686
+      }
+    },
+    "panels": {},
+    "blockSymbols": {},
+    "owner": {
+      "uuid": "C:\\Users\\V\\Documents\\LCEDA-Pro\\projects",
+      "username": "",
+      "nickname": ""
+    }
+  }
+}
