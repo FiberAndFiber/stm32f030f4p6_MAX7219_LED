@@ -44,7 +44,7 @@
 | PA9 | TX(预留) |
 | PA10| RX(预留) |
 
-### BOM [（点此下载）](./hardware/BOM_stm32f030f4p6_MAX7219_LED阵列.xlsx?raw=true)
+### BOM [（点此下载）](https://raw.githubusercontent.com/FiberAndFiber/stm32f030f4p6_MAX7219_LED/main/hardware/BOM_stm32f030f4p6_MAX7219_LED%E9%98%B5%E5%88%97.xlsx)
 | ID | Name | Designator | Footprint | Quantity | Manufacturer Part | Manufacturer | Supplier | Supplier Part |
 |:---|:-----|:-----------|:----------|:---------|:------------------|:-------------|:---------|:--------------|
 | 1 | 1kΩ | R13,R14 | R0603 | 2 | FRC0603F1001TS | FOJAN(富捷) | LCSC | C2907002 |
@@ -382,8 +382,8 @@ static const PageDef pages[] = {
 ```
 
 ## 五、下载固件
-Demo.bin[（点此下载）](./firmware/Demo.bin?raw=true)<br>
-Demo.hex[（点此下载）](./firmware/Demo.hex?raw=true)
+Demo.bin[（点此下载）](https://raw.githubusercontent.com/FiberAndFiber/stm32f030f4p6_MAX7219_LED/main/firmware/Demo.bin)<br>
+Demo.hex[（点此下载）](https://github.com/FiberAndFiber/stm32f030f4p6_MAX7219_LED/blob/refs/heads/main/firmware/Demo.hex)
 
 ## 六、声明
 OpenPower STM32F030F4P6_MAX7219_LED阵列 © 2026 Ma WenBin
